@@ -1,77 +1,48 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import API from "../../lib/api";
-import { useAuthStore } from "../../lib/store";
+import { apiRequest } from "@/lib/api";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const setToken = useAuthStore((state) => state.setToken);
-
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await API.post("/auth/login", { email, password });
-      setToken(res.data.token);
-      router.push("/dashboard");
+      const res = await apiRequest("/auth/login", "POST", { email, password });
+      localStorage.setItem("token", res.token);
+      setMessage(`✅ ${res.message}`);
     } catch (err: any) {
-      setError(err.response?.data?.error || "Login failed");
+      setMessage(`❌ ${err.message}`);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md w-96"
-      >
-        <h1 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-gray-100">
-          Login
-        </h1>
-
-        {error && <p className="text-red-500 mb-4">{error}</p>}
-
+    <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900">
+      <form onSubmit={handleLogin} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-80">
+        <h1 className="text-xl font-bold mb-4 text-center">Login</h1>
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full mb-4 px-3 py-2 border rounded 
-                     bg-gray-50 dark:bg-gray-700 
-                     text-gray-900 dark:text-gray-100
-                     border-gray-300 dark:border-gray-600"
+          className="w-full mb-3 p-2 border rounded"
+          required
         />
-
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full mb-6 px-3 py-2 border rounded 
-                     bg-gray-50 dark:bg-gray-700 
-                     text-gray-900 dark:text-gray-100
-                     border-gray-300 dark:border-gray-600"
+          className="w-full mb-3 p-2 border rounded"
+          required
         />
-
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded 
-                     hover:bg-blue-700 dark:hover:bg-blue-500"
-        >
+        <button className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">
           Login
         </button>
-
-        <p className="text-sm mt-4 text-center text-gray-700 dark:text-gray-300">
-          Belum punya akun?{" "}
-          <a href="/register" className="text-blue-600 dark:text-blue-400 underline">
-            Register
-          </a>
-        </p>
+        {message && <p className="mt-3 text-sm">{message}</p>}
       </form>
     </div>
   );
