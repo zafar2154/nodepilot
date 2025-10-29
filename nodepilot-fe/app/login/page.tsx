@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { apiRequest } from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
+
 
 export default function LoginPage() {
+  const { setAuth } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -13,6 +16,7 @@ export default function LoginPage() {
     try {
       const res = await apiRequest("/auth/login", "POST", { email, password });
       localStorage.setItem("token", res.token);
+      setAuth(res.token, { id: res.userId, email});
       setMessage(`✅ ${res.message}`);
     } catch (err: any) {
       setMessage(`❌ ${err.message}`);
