@@ -29,12 +29,28 @@ model Device {
   user      User         @relation(fields: [userId], references: [id])
   userId    Int
   data      DeviceData[]
+  status    String       @default("off")
+  widgets   Widget[]
   createdAt DateTime     @default(now())
 }
 
 model DeviceData {
   id        Int      @id @default(autoincrement())
   value     Float
+  device    Device   @relation(fields: [deviceId], references: [id])
+  deviceId  Int
+  createdAt DateTime @default(now())
+}
+
+model Widget {
+  id        Int      @id @default(autoincrement())
+  name      String
+  type      String   // "button", "label", "chart"
+  value     String?  @default("")
+  x         Int      @default(0)
+  y         Int      @default(0)
+  width     Int      @default(2)
+  height    Int      @default(2)
   device    Device   @relation(fields: [deviceId], references: [id])
   deviceId  Int
   createdAt DateTime @default(now())

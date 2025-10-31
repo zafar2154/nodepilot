@@ -5,6 +5,8 @@ import {
   getDevices,
   addDeviceData,
   getDeviceData,
+  setDeviceStatus,
+  getDeviceStatus,
 } from '../controllers/device.controller.js';
 
 const router = express.Router();
@@ -15,5 +17,7 @@ router.post('/', createDevice);
 router.get('/', getDevices);
 router.post('/:id/data', addDeviceData);
 router.get('/:id/data', getDeviceData);
+router.post('/:id/control', authMiddleware, setDeviceStatus);
+router.get('/:id/control', getDeviceStatus); // esp32 bisa akses tanpa auth kalau mau
 
 export default router;

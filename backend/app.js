@@ -2,6 +2,7 @@ import express from 'express';
 import authRoutes from './routes/auth.routes.js';
 import cors from 'cors';
 import deviceRoutes from './routes/device.routes.js';
+import widgetRoutes from './routes/widget.routes.js';
 
 const app = express();
 
@@ -17,5 +18,6 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/devices', deviceRoutes);
+app.use('/api/widgets', widgetRoutes);
 
 export default app;
