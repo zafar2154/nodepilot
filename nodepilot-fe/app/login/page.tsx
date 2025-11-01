@@ -21,7 +21,7 @@ export default function LoginPage() {
 
     if (data.token) {
       setAuth(data.token, data.user);
-      router.push("/devices"); // 👉 langsung ke halaman devices
+      router.push("/dashboard");
     } else {
       alert("Login gagal!");
     }

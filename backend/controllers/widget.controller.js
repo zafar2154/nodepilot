@@ -9,7 +9,7 @@ export const createWidget = async (req, res) => {
       data: {
         name,
         type,
-        deviceId: Number(deviceId),
+        deviceId: deviceId ? Number(deviceId) : null,
         x: x || 0,
         y: y || 0,
         width: width || 2,
@@ -17,10 +17,10 @@ export const createWidget = async (req, res) => {
         userId: req.user.id,
       },
     });
-    res.json(widget);
+    return res.json(widget);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to create widget' });
+    return res.status(500).json({ error: 'Failed to create widget' });
   }
 };
 
@@ -60,5 +60,25 @@ export const deleteWidget = async (req, res) => {
     res.json({ message: 'Widget deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete widget' });
+  }
+};
+
+// PUT /api/widgets/:id/device
+export const updateWidgetDevice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { deviceId } = req.body;
+
+    const updated = await prisma.widget.update({
+      where: { id: Number(id) },
+      data: {
+        deviceId: deviceId ? Number(deviceId) : null,
+      },
+    });
+
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update widget device' });
   }
 };

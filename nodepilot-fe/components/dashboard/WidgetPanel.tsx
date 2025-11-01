@@ -1,22 +1,20 @@
 "use client";
 
-import React from "react";
-
-const availableWidgets = [
-    { type: "switch", label: "Switch" },
-    { type: "label", label: "Label" },
-    { type: "chart", label: "Chart" },
-];
-
 export default function WidgetPanel({ onAddWidget }: { onAddWidget: (type: string) => void }) {
+    const widgetTypes = [
+        { type: "switch", label: "Switch" },
+        { type: "label", label: "Label" },
+        { type: "chart", label: "Chart" },
+    ];
+
     return (
-        <div className="p-4 border-r bg-muted flex flex-col gap-2">
-            <h2 className="font-bold mb-2">Widgets</h2>
-            {availableWidgets.map((w) => (
+        <div className="w-64 bg-card border-r p-4 flex flex-col space-y-3">
+            <h2 className="font-bold text-lg mb-2">Add Widget</h2>
+            {widgetTypes.map((w) => (
                 <button
                     key={w.type}
                     onClick={() => onAddWidget(w.type)}
-                    className="border p-2 rounded hover:bg-accent"
+                    className="bg-blue-600 text-white rounded p-2 hover:bg-blue-700"
                 >
                     ➕ {w.label}
                 </button>

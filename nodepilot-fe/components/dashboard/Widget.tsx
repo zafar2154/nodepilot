@@ -43,13 +43,26 @@ export default function Widget({
             .catch((err) => console.error("❌ Error fetching devices:", err));
     }, [token]);
 
-
-    const updateDevice = (deviceId: number) => {
+    const updateDevice = async (deviceId: number) => {
         setWidgets((prev) =>
             prev.map((w) =>
                 w.id === widget.id ? { ...w, deviceId: Number(deviceId) } : w
             )
         );
+        // Update ke backend supaya tersimpan di database
+        try {
+            await fetch(`http://localhost:5000/api/widgets/${widget.id}/device`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ deviceId }),
+            });
+            console.log(`✅ Widget ${widget.id} bound to device ${deviceId}`);
+        } catch (err) {
+            console.error("❌ Failed to update widget device:", err);
+        }
     };
 
     // Render per jenis widget

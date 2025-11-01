@@ -1,60 +1,66 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import GridLayout, { Layout } from "react-grid-layout";
+import { useRef } from "react";
+import GridLayout from "react-grid-layout";
 import Widget from "./Widget";
-
-interface DashboardGridProps {
-    layout: Layout[];
-    widgets: any[];
-    onLayoutChange: (layout: Layout[]) => void;
-    editMode: boolean;
-    setWidgets: (updater: (prev: any[]) => any[]) => void;
-}
+import { useAuthStore } from "@/store/authStore";
 
 export default function DashboardGrid({
     layout,
     widgets,
-    onLayoutChange,
-    editMode,
     setWidgets,
-}: DashboardGridProps) {
-    const saveTimeout = useRef<NodeJS.Timeout | null>(null);
+    onLayoutChange,
+}: {
+    layout: any[];
+    widgets: any[];
+    setWidgets: (updater: any) => void;
+    onLayoutChange: (layout: any[]) => void;
+}) {
+    const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+    const { token } = useAuthStore();
 
-    // Auto-save ke backend
-    const autoSave = async (updatedWidgets: any[]) => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        await fetch("http://localhost:5000/api/widgets", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ widgets: updatedWidgets }),
-        });
-        console.log("💾 Dashboard auto-saved");
+    // ✅ Hapus widget
+    const deleteWidget = (id: number) => {
+        setWidgets((prev) => prev.filter((w) => w.id !== id));
+        fetch(`http://localhost:5000/api/widgets/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+        }).catch((err) => console.error("❌ Failed to delete widget:", err));
     };
 
-    const handleLayoutChange = (newLayout: Layout[]) => {
+    // ✅ Auto-save posisi widget ke DB dengan debounce
+    const handleDebouncedLayoutChange = (newLayout: any[]) => {
         onLayoutChange(newLayout);
 
-        // Update posisi di state
-        const updatedWidgets = widgets.map((w) => {
-            const found = newLayout.find((l) => l.i === w.id.toString());
-            return found
-                ? { ...w, x: found.x, y: found.y, width: found.w, height: found.h }
-                : w;
-        });
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
 
-        setWidgets(updatedWidgets);
+        debounceTimeout.current = setTimeout(() => {
+            console.log("💾 Saving layout to backend...");
 
-        // Debounce auto-save biar tidak sering request
-        if (saveTimeout.current) clearTimeout(saveTimeout.current);
-        saveTimeout.current = setTimeout(() => {
-            autoSave(updatedWidgets);
-        }, 1000);
+            newLayout.forEach((item) => {
+                const widget = widgets.find((w) => w.id.toString() === item.i);
+                if (widget) {
+                    fetch(`http://localhost:5000/api/widgets/${widget.id}`, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${token}`,
+                        },
+                        body: JSON.stringify({
+                            x: item.x,
+                            y: item.y,
+                            width: item.w,
+                            height: item.h,
+                        }),
+                    }).catch((err) =>
+                        console.error(
+                            `❌ Failed to save layout for widget ${widget.id}:`,
+                            err
+                        )
+                    );
+                }
+            });
+        }, 500);
     };
 
     return (
@@ -63,27 +69,52 @@ export default function DashboardGrid({
                 className="layout"
                 layout={layout}
                 cols={12}
-                rowHeight={100}
+                rowHeight={120}
                 width={1200}
-                margin={[16, 16]}
-                isDraggable={editMode}
-                isResizable={editMode}
-                onLayoutChange={handleLayoutChange}
+                isDraggable={true}
+                isResizable={true}
+                draggableHandle=".drag-handle"
+                onLayoutChange={handleDebouncedLayoutChange}
             >
-                {widgets.map((widget) => {
-                    const gridData = {
-                        i: widget.id.toString(),
-                        x: widget.x ?? 0,
-                        y: widget.y ?? 0,
-                        w: widget.width ?? 3,
-                        h: widget.height ?? 2,
-                    };
-                    return (
-                        <div key={gridData.i} data-grid={gridData}>
-                            <Widget widget={widget} setWidgets={setWidgets} />
+                {Array.isArray(widgets) &&
+                    widgets.map((widget) => (
+                        <div
+                            key={widget.id}
+                            data-grid={layout.find((l) => l.i === widget.id.toString())}
+                        >
+                            <div
+                                className="relative bg-card p-3 rounded-lg shadow-md hover:shadow-lg transition"
+                                onMouseDown={(e) => {
+                                    if (
+                                        !(e.target as HTMLElement).classList.contains("drag-handle")
+                                    ) {
+                                        e.stopPropagation();
+                                    }
+                                }}
+                            >
+                                {/* Tombol hapus */}
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteWidget(widget.id);
+                                    }}
+                                    className="absolute top-1 left-1 bg-red-500 text-white rounded-full px-2 py-1 text-xs hover:bg-red-600 z-10"
+                                >
+                                    ✕
+                                </button>
+
+                                {/* Drag handle ☰ */}
+                                <div className="drag-handle absolute top-1 right-1 cursor-move select-none flex items-center justify-center w-6 h-6 rounded-full bg-white/80 hover:bg-white text-gray-900 font-bold shadow">
+                                    ☰
+                                </div>
+
+                                {/* Isi widget */}
+                                <div className="mt-4">
+                                    <Widget widget={widget} setWidgets={setWidgets} />
+                                </div>
+                            </div>
                         </div>
-                    );
-                })}
+                    ))}
             </GridLayout>
         </div>
     );
