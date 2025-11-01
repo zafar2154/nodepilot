@@ -1,17 +1,18 @@
 import express from 'express';
 import { authMiddleware } from '../middleware/auth.js';
 import {
-  createWidget,
   getWidgets,
   updateWidgetValue,
+  saveWidgets,
 } from '../controllers/widget.controller.js';
+import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.use(authMiddleware);
 
-router.post('/', createWidget);
-router.get('/', getWidgets);
+router.post('/', authMiddleware, saveWidgets);
+router.get('/', authMiddleware, getWidgets);
 router.post('/:id/value', updateWidgetValue);
 router.put('/:id', authMiddleware, async (req, res) => {
   const { id } = req.params;

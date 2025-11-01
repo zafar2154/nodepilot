@@ -25,7 +25,7 @@ export default function SwitchWidget({ ws, deviceId }: SwitchWidgetProps) {
         }
     };
 
-    // Optional: update switch dari data real-time ESP32
+    // Update dari ESP32 secara realtime
     useEffect(() => {
         if (!ws) return;
         ws.onmessage = (event) => {
@@ -39,7 +39,7 @@ export default function SwitchWidget({ ws, deviceId }: SwitchWidgetProps) {
     }, [ws]);
 
     return (
-        <div className="flex flex-col items-center space-y-2">
+        <div className="flex flex-col items-center space-y-2 select-none">
             <span className="text-gray-700 dark:text-gray-200">Switch</span>
             <button
                 onClick={toggleSwitch}

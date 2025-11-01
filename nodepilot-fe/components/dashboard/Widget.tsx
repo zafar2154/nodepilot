@@ -3,9 +3,17 @@
 import React, { useEffect, useState } from "react";
 import SwitchWidget from "./widget/SwitchWidget";
 
-export default function Widget({ widget }: { widget: any }) {
+export default function Widget({
+    widget,
+    setWidgets,
+}: {
+    widget: any;
+    setWidgets: (updater: (prev: any[]) => any[]) => void;
+}) {
     const [ws, setWs] = useState<WebSocket | null>(null);
+    const [devices, setDevices] = useState<any[]>([]);
 
+    // Hubungkan ke WebSocket
     useEffect(() => {
         const socket = new WebSocket("ws://localhost:5000");
         socket.onopen = () => {
@@ -16,20 +24,60 @@ export default function Widget({ widget }: { widget: any }) {
         return () => socket.close();
     }, []);
 
-    // Render berbagai jenis widget
+    // Ambil daftar device user
+    useEffect(() => {
+        fetch("http://localhost:5000/api/devices", {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        })
+            .then((res) => res.json())
+            .then(setDevices)
+            .catch(console.error);
+    }, []);
+
+    const updateDevice = (deviceId: number) => {
+        setWidgets((prev) =>
+            prev.map((w) =>
+                w.id === widget.id ? { ...w, deviceId: Number(deviceId) } : w
+            )
+        );
+    };
+
+    // Render per jenis widget
     switch (widget.type) {
         case "switch":
             return (
-                <div className="p-4 border rounded-lg bg-card shadow-md flex items-center justify-center">
+                <div className="p-4 border rounded-lg bg-card shadow-md flex flex-col items-center justify-center space-y-2">
                     <SwitchWidget ws={ws} deviceId={widget.deviceId} />
+                    <select
+                        value={widget.deviceId || ""}
+                        onChange={(e) => updateDevice(e.target.value)}
+                        className="border rounded p-1 text-sm"
+                    >
+                        <option value="">Select Device</option>
+                        {devices.map((d) => (
+                            <option key={d.id} value={d.id}>
+                                {d.name}
+                            </option>
+                        ))}
+                    </select>
                 </div>
             );
 
         case "label":
             return (
                 <div className="p-4 border rounded-lg bg-card shadow-md text-center">
-                    <h3 className="text-lg">{widget.label || "Value"}</h3>
-                    <p className="text-3xl font-bold">42</p>
+                    <h3 className="text-lg">{widget.label || "Label"}</h3>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                        42
+                    </p>
+                </div>
+            );
+
+        case "chart":
+            return (
+                <div className="p-4 border rounded-lg bg-card shadow-md text-center">
+                    <h3 className="text-lg font-semibold mb-2">Chart (coming soon)</h3>
+                    <p className="text-gray-500">Realtime data graph</p>
                 </div>
             );
 
