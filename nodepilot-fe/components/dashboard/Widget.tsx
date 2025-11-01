@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import SwitchWidget from "./widget/SwitchWidget";
+import { useAuthStore } from "@/store/authStore";
+
 
 export default function Widget({
     widget,
@@ -10,6 +12,8 @@ export default function Widget({
     widget: any;
     setWidgets: (updater: (prev: any[]) => any[]) => void;
 }) {
+    const { token } = useAuthStore(); // ✅ ambil token dari global store
+
     const [ws, setWs] = useState<WebSocket | null>(null);
     const [devices, setDevices] = useState<any[]>([]);
 
@@ -26,13 +30,19 @@ export default function Widget({
 
     // Ambil daftar device user
     useEffect(() => {
+        if (!token) return; // pastikan token ada
+
         fetch("http://localhost:5000/api/devices", {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            headers: { Authorization: `Bearer ${token}` }, // ✅ sama seperti /devices
         })
             .then((res) => res.json())
-            .then(setDevices)
-            .catch(console.error);
-    }, []);
+            .then((data) => {
+                console.log("📦 Devices response:", data);
+                setDevices(Array.isArray(data) ? data : []);
+            })
+            .catch((err) => console.error("❌ Error fetching devices:", err));
+    }, [token]);
+
 
     const updateDevice = (deviceId: number) => {
         setWidgets((prev) =>

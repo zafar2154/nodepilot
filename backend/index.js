@@ -44,7 +44,13 @@ wss.on('connection', (ws) => {
         console.log(`🌡️ Data from Device ${data.deviceId}:`, data.value);
         for (const [id, userWs] of clients.users) {
           if (userWs.readyState === 1) {
-            userWs.send(JSON.stringify(data));
+            userWs.send(
+              JSON.stringify({
+                type: 'sensor_update', // penting: sinkron dengan frontend
+                deviceId: data.deviceId,
+                value: data.value,
+              }),
+            );
           }
         }
       }

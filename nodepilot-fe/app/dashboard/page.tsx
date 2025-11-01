@@ -13,25 +13,34 @@ export default function DashboardPage() {
 
     // Ambil data dashboard user dari backend
     useEffect(() => {
-        if (!token) return;
-        fetch("http://localhost:5000/api/widgets", {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                setWidgets(data);
+        const fetchWidgets = async () => {
+            try {
+                const res = await fetch("http://localhost:5000/api/widgets", {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                const data = await res.json();
+
+                // Pastikan data selalu array
+                const widgetArray = Array.isArray(data) ? data : data.widgets || [];
+
+                setWidgets(widgetArray);
                 setLayout(
-                    data.map((w: any) => ({
+                    widgetArray.map((w: any) => ({
                         i: w.id.toString(),
-                        x: w.x,
-                        y: w.y,
-                        w: w.width,
-                        h: w.height,
+                        x: w.x ?? 0,
+                        y: w.y ?? 0,
+                        w: w.width ?? 3,
+                        h: w.height ?? 2,
                     }))
                 );
-            })
-            .catch((err) => console.error("Failed to load widgets", err));
+            } catch (err) {
+                console.error("Failed to fetch widgets", err);
+            }
+        };
+
+        if (token) fetchWidgets();
     }, [token]);
+
 
     // Tambah widget baru dari panel kiri
     const addWidget = (type: string) => {

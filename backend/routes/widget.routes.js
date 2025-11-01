@@ -5,7 +5,6 @@ import {
   updateWidgetValue,
   saveWidgets,
 } from '../controllers/widget.controller.js';
-import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
