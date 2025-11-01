@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from "react";
 import { WidthProvider, Responsive } from "react-grid-layout";
 import WidgetBox from "./WidgetBox";
 import WidgetRenderer from "./WidgetRenderer";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
+import { useEffect, useState } from "react";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export default function DashboardPage() {
+    const [ws, setWs] = useState<WebSocket | null>(null);
+
+    useEffect(() => {
+        const socket = new WebSocket("ws://localhost:5000");
+        socket.onopen = () => {
+            socket.send(JSON.stringify({ type: "register_user", userId: 1 }));
+        };
+        setWs(socket);
+        return () => socket.close();
+    }, []);
+
     const [layout, setLayout] = useState<any[]>([]);
     const [widgets, setWidgets] = useState<{ id: string; type: string }[]>([]);
     const [editMode, setEditMode] = useState(true);
@@ -54,7 +65,7 @@ export default function DashboardPage() {
                             data-grid={layout.find((l) => l.i === w.id)}
                             className="bg-white shadow rounded flex items-center justify-center"
                         >
-                            <WidgetRenderer type={w.type} />
+                            <WidgetRenderer type={w.type} ws={ws!} />
                         </div>
                     ))}
                 </ResponsiveGridLayout>
