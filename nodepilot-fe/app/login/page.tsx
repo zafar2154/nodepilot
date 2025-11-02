@@ -2,28 +2,32 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore } from "@/lib/store";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const { setAuth } = useAuthStore();
+  const { setToken } = useAuthStore(); // ✅ ambil dari store
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     const res = await fetch("http://localhost:5000/api/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
 
-    if (data.token) {
-      setAuth(data.token, data.user);
+    const data = await res.json();
+    console.log("📩 Login response:", data);
+
+    if (res.ok && data.token) {
+      localStorage.setItem("token", data.token);
+      setToken(data.token); // ✅ simpan token ke Zustand & localStorage
       router.push("/dashboard");
     } else {
-      alert("Login gagal!");
+      alert(data.error || "Login gagal!");
     }
   };
 
@@ -37,6 +41,7 @@ export default function LoginPage() {
           className="border p-2 rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
         <input
           type="password"
@@ -44,8 +49,12 @@ export default function LoginPage() {
           className="border p-2 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
-        <button type="submit" className="bg-blue-600 text-white p-2 rounded">
+        <button
+          type="submit"
+          className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700"
+        >
           Login
         </button>
       </form>

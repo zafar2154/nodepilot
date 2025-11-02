@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import WidgetPanel from "@/components/dashboard/WidgetPanel";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore } from "@/lib/store";
 
 export default function DashboardPage() {
     const { token, logout } = useAuthStore();
@@ -14,7 +14,10 @@ export default function DashboardPage() {
 
     // ✅ Ambil semua widget user
     useEffect(() => {
-        if (!token) return;
+        if (!token) {
+            router.push("/login");
+        }
+        console.log("TOKEN:", token)
         fetch("http://localhost:5000/api/widgets", {
             headers: { Authorization: `Bearer ${token}` },
         })
@@ -88,7 +91,7 @@ export default function DashboardPage() {
                 <h1 className="text-2xl font-semibold tracking-tight">📊 Dashboard</h1>
                 <button
                     onClick={() => {
-                        logout;
+                        logout();
                         router.push("/");
                     }}
                     className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"

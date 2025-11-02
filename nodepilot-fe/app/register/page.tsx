@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/store/authStore";
+import { useAuthStore } from "@/lib/store";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -30,7 +30,7 @@ export default function RegisterPage() {
     if (res.ok && data.token) {
       localStorage.setItem("token", data.token);
       setToken(data.token);
-      router.push("/devices");
+      router.push("/dashboard");
     } else {
       alert(data.error || "Register gagal!");
     }
