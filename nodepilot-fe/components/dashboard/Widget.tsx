@@ -16,6 +16,7 @@ export default function Widget({
 
     const [ws, setWs] = useState<WebSocket | null>(null);
     const [devices, setDevices] = useState<any[]>([]);
+    const [data, setData] = useState<any>(null);
 
     // Hubungkan ke WebSocket
     useEffect(() => {
@@ -23,10 +24,19 @@ export default function Widget({
         socket.onopen = () => {
             socket.send(JSON.stringify({ type: "register_user", userId: 1 }));
         };
+        socket.onmessage = (event) => {
+            console.log("📡 WebSocket message:", event.data);
+
+            const msg = JSON.parse(event.data);
+            console.log("🧠 Device compare:", msg.deviceId, widget.deviceId);
+            if (msg.type === "sensor_data" || msg.deviceId === widget.deviceId) {
+                setData(msg.value);
+            }
+        };
         setWs(socket);
 
         return () => socket.close();
-    }, []);
+    }, [widget.deviceId]);
 
     // Ambil daftar device user
     useEffect(() => {
@@ -88,12 +98,34 @@ export default function Widget({
 
         case "label":
             return (
-                <div className="p-4 border rounded-lg bg-card shadow-md text-center">
-                    <h3 className="text-lg">{widget.label || "Label"}</h3>
-                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-                        42
-                    </p>
+                <div className="p-4 border rounded-lg bg-card shadow-md text-center space-y-2">
+                    <h3 className="text-lg font-semibold">{widget.label || "Sensor Data"}</h3>
+
+                    {/* 🔽 Tambah dropdown pilih device */}
+                    <select
+                        value={widget.deviceId || ""}
+                        onChange={(e) => updateDevice(Number(e.target.value))}
+                        className="border rounded p-1 text-sm"
+                    >
+                        <option value="">Select Device</option>
+                        {devices.map((d) => (
+                            <option key={d.id} value={d.id}>
+                                {d.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    {/* 🔢 Info data */}
+                    {data ? (
+                        <div>
+                            <p className="text-xl">🌡️ {data.temp ?? "-"}°C</p>
+                            <p className="text-xl">💧 pH: {data.ph ?? "-"}</p>
+                        </div>
+                    ) : (
+                        <p className="text-gray-400">Waiting for data...</p>
+                    )}
                 </div>
+
             );
 
         case "chart":
