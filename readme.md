@@ -56,6 +56,11 @@ npm run dev
 ```
 Akses frontend di: http://localhost:3000
 
+### code esp32
+```bash
+https://github.com/zafar2154/nodepilot-esp32.git
+```
+
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)

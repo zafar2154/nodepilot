@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"; // <-- Impor useRouter
 
 interface Device {
   id: number;
+  vPin: number;
   name: string;
   createdAt: string;
 }
@@ -16,9 +17,12 @@ export default function DeviceListPage() {
   const router = useRouter();
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newDevice, setNewDevice] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newVPin, setNewVPin] = useState("");
+
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [editingVPin, setEditingVPin] = useState("");
 
   const fetchDevices = () => {
     if (!token) return;
@@ -39,9 +43,11 @@ export default function DeviceListPage() {
   }, [token]);
 
   const handleAddDevice = async (e: React.FormEvent) => {
-    // ... (fungsi ini sudah ada)
     e.preventDefault();
-    if (!newDevice.trim()) return;
+    if (!newName.trim() || !newVPin.trim()) {
+      alert("Name and vPin are required");
+      return;
+    }
 
     await fetch("http://localhost:5000/api/devices", {
       method: "POST",
@@ -49,10 +55,11 @@ export default function DeviceListPage() {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ name: newDevice }),
+      body: JSON.stringify({ name: newName, vPin: Number(newVPin) }),
     });
 
-    setNewDevice("");
+    setNewName("");
+    setNewVPin("");
     fetchDevices();
   };
 
@@ -89,12 +96,14 @@ export default function DeviceListPage() {
   const startEditing = (device: Device) => {
     setEditingId(device.id);
     setEditingName(device.name);
+    setEditingVPin(String(device.vPin));
   };
 
   // Panggil saat tombol "Cancel" diklik
   const cancelEditing = () => {
     setEditingId(null);
     setEditingName("");
+    setEditingVPin("");
   };
 
   // Panggil saat tombol "Save" diklik
@@ -106,14 +115,15 @@ export default function DeviceListPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ name: editingName }),
+        body: JSON.stringify({ name: editingName, vPin: Number(editingVPin) }),
       });
 
       if (res.ok) {
         cancelEditing(); // Keluar dari mode edit
         fetchDevices(); // Refresh data
       } else {
-        alert("Failed to update device");
+        const data = await res.json();
+        alert(data.error || "Failed to update device");
       }
     } catch (err) {
       alert("An error occurred");
@@ -136,28 +146,30 @@ export default function DeviceListPage() {
       <form onSubmit={handleAddDevice} className="flex gap-2 mb-6">
         <input
           type="text"
-          value={newDevice}
-          onChange={(e) => setNewDevice(e.target.value)}
-          placeholder="New device name (e.g., Suhu Kebun)"
-          className="border p-2 rounded w-full"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          placeholder="New device name"
+          className="border p-2 rounded w-3/4"
         />
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
+        <input
+          type="number"
+          value={newVPin}
+          onChange={(e) => setNewVPin(e.target.value)}
+          placeholder="vPin"
+          className="border p-2 rounded w-1/4"
+        />
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
           Add
         </button>
       </form>
 
       {/* List Devices */}
+      {/* List Devices */}
       <ul className="space-y-3">
         {devices.map((device) => (
-          <li
-            key={device.id}
-            className="border p-3 rounded-lg shadow-sm"
-          >
-            {/* Tampilkan input jika ID-nya sedang diedit */}
+          <li key={device.id} className="border p-3 rounded-lg shadow-sm">
             {editingId === device.id ? (
+              // Mode Edit
               <div className="flex flex-col space-y-2">
                 <input
                   type="text"
@@ -165,7 +177,15 @@ export default function DeviceListPage() {
                   onChange={(e) => setEditingName(e.target.value)}
                   className="border p-2 rounded w-full"
                 />
+                <input
+                  type="number"
+                  value={editingVPin}
+                  onChange={(e) => setEditingVPin(e.target.value)}
+                  className="border p-2 rounded w-full"
+                  placeholder="vPin"
+                />
                 <div className="flex gap-2">
+                  {/* --- TOMBOL SAVE & CANCEL (DIKEMBALIKAN) --- */}
                   <button
                     onClick={() => handleUpdateDevice(device.id)}
                     className="bg-green-500 text-white px-3 py-1 rounded text-sm"
@@ -181,19 +201,21 @@ export default function DeviceListPage() {
                 </div>
               </div>
             ) : (
-              // Tampilkan mode normal
+              // Mode Tampilan Normal
               <div className="flex justify-between items-center">
                 <div>
+                  <span className="text-lg font-bold text-blue-600 mr-2">[V{device.vPin}]</span>
                   <Link
                     href={`/devices/${device.id}`}
-                    className="text-blue-600 hover:underline font-semibold"
+                    className="font-semibold hover:underline"
                   >
                     {device.name}
                   </Link>
                   <p className="text-sm text-gray-500">
-                    ID: {device.id} | Created: {new Date(device.createdAt).toLocaleDateString()}
+                    Internal ID: {device.id} | Created: {new Date(device.createdAt).toLocaleDateString()}
                   </p>
                 </div>
+                {/* --- TOMBOL EDIT & DELETE (DIKEMBALIKAN) --- */}
                 <div className="flex gap-2">
                   <button
                     onClick={() => startEditing(device)}

@@ -29,9 +29,10 @@ wss.on('connection', (ws) => {
 
       // Register device (ESP32)
       if (data.type === 'register_device') {
-        clients.devices.set(data.deviceId, ws);
-        ws.deviceId = data.deviceId;
-        console.log(`📡 Device ${data.deviceId} registered`);
+        const vPin = data.deviceId;
+        clients.devices.set(vPin, ws); // <-- Gunakan vPin sebagai Kunci
+        ws.deviceId = vPin; // Simpan vPin di koneksi ws
+        console.log(`📡 Device with vPin ${vPin} registered`);
       }
 
       // Register user (frontend dashboard)
@@ -43,30 +44,61 @@ wss.on('connection', (ws) => {
 
       // Data sensor dari ESP32
       else if (data.type === 'sensor_data') {
-        console.log(`Data from Device ${data.deviceId}:`, data.value);
-        try {
+        const vPin = data.deviceId; // Ini adalah vPin (misal: 50)
+        const value = data.value;
+
+        // 1. Cari internal 'id' berdasarkan 'vPin'
+        const device = await prisma.device.findUnique({
+          where: { vPin: vPin },
+          select: { id: true }, // Hanya butuh 'id'
+        });
+
+        if (device) {
+          // 2. Simpan ke DB menggunakan internal 'id'
           await prisma.deviceData.create({
-            data: {
-              value: data.value,
-              deviceId: data.deviceId,
-            },
+            data: { value: value, deviceId: device.id },
           });
-        } catch (dbError) {
-          console.error('❌ Failed to save sensor data to DB:', dbError);
-        }
-        for (const [id, userWs] of clients.users) {
-          if (userWs.readyState === 1) {
-            userWs.send(JSON.stringify(data));
+
+          // 3. Broadcast ke frontend MENGGUNAKAN internal 'id'
+          //    (Frontend Widget.tsx terhubung ke internal 'id')
+          const forwardData = JSON.stringify({
+            type: 'sensor_data',
+            deviceId: device.id, // <-- Kirim internal 'id', BUKAN vPin
+            value: value,
+          });
+
+          for (const [id, userWs] of clients.users) {
+            if (userWs.readyState === 1) {
+              userWs.send(forwardData);
+            }
           }
+        } else {
+          console.warn(`⚠️ Received data for unknown vPin: ${vPin}`);
         }
       }
 
       // Command dari user ke ESP32
       else if (data.type === 'set_device_state') {
-        const target = clients.devices.get(data.deviceId);
-        if (target && target.readyState === 1) {
-          target.send(JSON.stringify(data));
-          console.log(`🚀 Sent command to device ${data.deviceId}`);
+        const internalId = data.deviceId;
+
+        // 1. Cari 'vPin' berdasarkan internal 'id'
+        const device = await prisma.device.findUnique({
+          where: { id: internalId },
+          select: { vPin: true },
+        });
+        if (device) {
+          // 2. Cari koneksi ESP32 menggunakan 'vPin'
+          const target = clients.devices.get(device.vPin);
+          if (target && target.readyState === 1) {
+            // 3. Kirim data ke ESP32 (ESP32 hanya mengerti vPin)
+            const forwardData = JSON.stringify({
+              type: 'set_device_state',
+              deviceId: device.vPin, // <-- Kirim vPin, BUKAN internal 'id'
+              value: data.value,
+            });
+            target.send(forwardData);
+            console.log(`🚀 Sent command to device with vPin ${device.vPin}`);
+          }
         }
       }
     } catch (err) {

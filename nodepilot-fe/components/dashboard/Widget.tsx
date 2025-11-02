@@ -158,7 +158,6 @@ export default function Widget({
         case "label":
             return (
                 <div className="p-4 border rounded-lg bg-card shadow-md text-center space-y-2">
-                    <h3 className="text-lg font-semibold">{widget.label || "Sensor Data"}</h3>
                     <EditableWidgetName /> {/* <-- Gunakan komponen baru */}
                     {/* 🔽 Dropdown pilih device (sudah benar) */}
                     <select

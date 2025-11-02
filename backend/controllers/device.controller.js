@@ -1,19 +1,102 @@
 import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-// Create Device
+// Create Device (FIX: Menerima vPin)
 export const createDevice = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, vPin } = req.body;
+    if (!name || vPin === undefined) {
+      return res.status(400).json({ error: 'Name and vPin are required' });
+    }
+
     const device = await prisma.device.create({
       data: {
         name,
+        vPin: Number(vPin),
         userId: req.user.id,
       },
     });
     res.json(device);
   } catch (err) {
+    if (err.code === 'P2002') {
+      // Error jika vPin sudah ada
+      return res.status(400).json({ error: 'vPin already in use' });
+    }
+    console.error('Error creating device:', err);
     res.status(500).json({ error: 'Failed to create device' });
+  }
+};
+
+// Update a device (FIX: Menerima vPin)
+export const updateDevice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, vPin } = req.body;
+
+    const device = await prisma.device.findFirst({
+      where: { id: Number(id), userId: req.user.id },
+    });
+
+    if (!device) {
+      return res.status(404).json({ error: 'Device not found' });
+    }
+
+    const dataToUpdate = {};
+    if (name !== undefined) dataToUpdate.name = name;
+    if (vPin !== undefined) dataToUpdate.vPin = Number(vPin);
+
+    const updatedDevice = await prisma.device.update({
+      where: { id: Number(id) },
+      data: dataToUpdate,
+    });
+
+    res.json(updatedDevice);
+  } catch (err) {
+    if (err.code === 'P2002') {
+      // Error jika vPin sudah ada
+      return res.status(400).json({ error: 'vPin already in use' });
+    }
+    console.error('Error updating device:', err);
+    res.status(500).json({ error: 'Failed to update device' });
+  }
+};
+
+// Delete a device (FIX: Menghapus data terkait)
+export const deleteDevice = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const device = await prisma.device.findFirst({
+      where: {
+        id: Number(id),
+        userId: req.user.id,
+      },
+    });
+
+    if (!device) {
+      return res
+        .status(403)
+        .json({ error: 'Unauthorized or device not found' });
+    }
+
+    // Hapus data dan widget terkait SEBELUM menghapus device
+    await prisma.deviceData.deleteMany({
+      where: { deviceId: Number(id) },
+    });
+    await prisma.widget.updateMany({
+      where: { deviceId: Number(id) },
+      data: { deviceId: null },
+    });
+
+    // Hapus Device
+    await prisma.device.delete({
+      where: { id: Number(id) },
+    });
+
+    res.json({ message: 'Device deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting device:', err);
+    res.status(500).json({ error: 'Failed to delete device' });
   }
 };
 
@@ -110,73 +193,5 @@ export const getDeviceStatus = async (req, res) => {
     res.json(device);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch status' });
-  }
-};
-
-// Update a device (misal: ganti nama)
-export const updateDevice = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name } = req.body; // Hanya izinkan update nama
-
-    // Pastikan device ada dan milik user
-    const device = await prisma.device.findFirst({
-      where: {
-        id: Number(id),
-        userId: req.user.id,
-      },
-    });
-
-    if (!device) {
-      return res.status(404).json({ error: 'Device not found' });
-    }
-
-    // Update device
-    const updatedDevice = await prisma.device.update({
-      where: { id: Number(id) },
-      data: { name },
-    });
-
-    res.json(updatedDevice);
-  } catch (err) {
-    console.error('Error updating device:', err);
-    res.status(500).json({ error: 'Failed to update device' });
-  }
-};
-
-// Delete a device
-export const deleteDevice = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // 1. Verifikasi kepemilikan device
-    const device = await prisma.device.findFirst({
-      where: {
-        id: Number(id),
-        userId: req.user.id, // Pastikan device ini milik user yg login
-      },
-    });
-
-    if (!device) {
-      return res
-        .status(403)
-        .json({ error: 'Unauthorized or device not found' });
-    }
-
-    // 2. Hapus semua DeviceData terkait (karena schema-mu menggunakan 'ON DELETE RESTRICT')
-    // Widget akan otomatis di-set NULL karena 'ON DELETE SET NULL'
-    await prisma.deviceData.deleteMany({
-      where: { deviceId: Number(id) },
-    });
-
-    // 3. Hapus Device
-    await prisma.device.delete({
-      where: { id: Number(id) },
-    });
-
-    res.json({ message: 'Device and associated data deleted successfully' });
-  } catch (err) {
-    console.error('Error deleting device:', err);
-    res.status(500).json({ error: 'Failed to delete device' });
   }
 };

@@ -22,6 +22,7 @@ model Device {
   name      String
   user      User         @relation(fields: [userId], references: [id])
   userId    Int
+  vPin      Int          @unique // <-- 1. TAMBAHKAN BARIS INI
   data      DeviceData[]
   status    String       @default("off")
   widgets   Widget[]
