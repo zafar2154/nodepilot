@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/store";
+import { useAuthStore } from "@/store/authStore";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const { setToken } = useAuthStore(); // ✅ ambil dari store
+  const { setAuth } = useAuthStore(); // ✅ ambil dari store
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,7 +24,7 @@ export default function LoginPage() {
 
     if (res.ok && data.token) {
       localStorage.setItem("token", data.token);
-      setToken(data.token); // ✅ simpan token ke Zustand & localStorage
+      setAuth(data.token, data.user || null); // Gunakan data.user jika ada      
       router.push("/dashboard");
     } else {
       alert(data.error || "Login gagal!");

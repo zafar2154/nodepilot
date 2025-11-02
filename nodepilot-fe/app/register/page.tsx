@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuthStore } from "@/lib/store";
+import { useAuthStore } from "@/store/authStore";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const { setToken } = useAuthStore();
+  const { setAuth } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +29,7 @@ export default function RegisterPage() {
 
     if (res.ok && data.token) {
       localStorage.setItem("token", data.token);
-      setToken(data.token);
+      setAuth(data.token, data.user);
       router.push("/dashboard");
     } else {
       alert(data.error || "Register gagal!");

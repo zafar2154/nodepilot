@@ -112,3 +112,42 @@ export const getDeviceStatus = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch status' });
   }
 };
+
+// ... (fungsi lainnya)
+
+// Delete a device
+export const deleteDevice = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Verifikasi kepemilikan device
+    const device = await prisma.device.findFirst({
+      where: {
+        id: Number(id),
+        userId: req.user.id, // Pastikan device ini milik user yg login
+      },
+    });
+
+    if (!device) {
+      return res
+        .status(403)
+        .json({ error: 'Unauthorized or device not found' });
+    }
+
+    // 2. Hapus semua DeviceData terkait (karena schema-mu menggunakan 'ON DELETE RESTRICT')
+    // Widget akan otomatis di-set NULL karena 'ON DELETE SET NULL'
+    await prisma.deviceData.deleteMany({
+      where: { deviceId: Number(id) },
+    });
+
+    // 3. Hapus Device
+    await prisma.device.delete({
+      where: { id: Number(id) },
+    });
+
+    res.json({ message: 'Device and associated data deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting device:', err);
+    res.status(500).json({ error: 'Failed to delete device' });
+  }
+};

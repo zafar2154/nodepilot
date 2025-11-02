@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import SwitchWidget from "./widget/SwitchWidget";
-import { useAuthStore } from "@/lib/store";
+import { useAuthStore } from "@/store/authStore";
 
 
 export default function Widget({
