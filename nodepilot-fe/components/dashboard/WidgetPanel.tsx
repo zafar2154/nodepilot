@@ -8,7 +8,7 @@ export default function WidgetPanel({ onAddWidget }: { onAddWidget: (type: strin
     ];
 
     return (
-        <div className="w-64 bg-card border-r p-4 flex flex-col space-y-3">
+        <div className="w-64 bg-card p-4 flex flex-col space-y-3">
             <h2 className="font-bold text-lg mb-2">Add Widget</h2>
             {widgetTypes.map((w) => (
                 <button

@@ -8,22 +8,31 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
-  const { setAuth } = useAuthStore();
+  const { setToken } = useAuthStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("🛰️ Sending register data:", { email, password });
+
     const res = await fetch("http://localhost:5000/api/auth/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        name: email.split("@")[0],
+        email,
+        password,
+      }),
     });
-    const data = await res.json();
 
-    if (data.token) {
-      setAuth(data.token, data.user);
-      router.push("/devices"); // 👉 langsung ke halaman devices
+    const data = await res.json();
+    console.log("📩 Register response:", data);
+
+    if (res.ok && data.token) {
+      localStorage.setItem("token", data.token);
+      setToken(data.token);
+      router.push("/devices");
     } else {
-      alert("Register gagal!");
+      alert(data.error || "Register gagal!");
     }
   };
 
@@ -37,6 +46,7 @@ export default function RegisterPage() {
           className="border p-2 rounded"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          required
         />
         <input
           type="password"
@@ -44,8 +54,12 @@ export default function RegisterPage() {
           className="border p-2 rounded"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
-        <button type="submit" className="bg-green-600 text-white p-2 rounded">
+        <button
+          type="submit"
+          className="bg-green-600 text-white p-2 rounded hover:bg-green-700"
+        >
           Register
         </button>
       </form>

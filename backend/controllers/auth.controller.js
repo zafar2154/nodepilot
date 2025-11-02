@@ -16,9 +16,13 @@ export const register = async (req, res) => {
       data: { email, password: hashed },
     });
 
+    // 🔥 Tambahkan token di sini
+    const token = generateToken({ id: user.id, email: user.email });
+
     res.json({
       message: 'User registered',
       user: { id: user.id, email: user.email },
+      token, // ✅ kirim token supaya frontend bisa langsung login
     });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });

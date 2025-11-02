@@ -1,14 +1,16 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import WidgetPanel from "@/components/dashboard/WidgetPanel";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuthStore } from "@/store/authStore";
 
 export default function DashboardPage() {
-    const { token } = useAuthStore();
+    const { token, logout } = useAuthStore();
     const [widgets, setWidgets] = useState<any[]>([]);
     const [layout, setLayout] = useState<any[]>([]);
+    const router = useRouter();
 
     // ✅ Ambil semua widget user
     useEffect(() => {
@@ -80,15 +82,37 @@ export default function DashboardPage() {
     };
 
     return (
-        <div className="flex min-h-screen bg-background text-foreground">
-            <WidgetPanel onAddWidget={addWidget} />
-            <div className="flex-1 p-4">
-                <DashboardGrid
-                    layout={layout}
-                    widgets={widgets}
-                    setWidgets={setWidgets}
-                    onLayoutChange={handleLayoutChange}
-                />
+        <div className="flex flex-col min-h-screen bg-background text-foreground">
+            {/* 🔹 Header */}
+            <header className="flex items-center justify-between p-4 border-b bg-card shadow-sm">
+                <h1 className="text-2xl font-semibold tracking-tight">📊 Dashboard</h1>
+                <button
+                    onClick={() => {
+                        logout;
+                        router.push("/");
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+                >
+                    Logout
+                </button>
+            </header>
+
+            {/* 🔹 Konten utama */}
+            <div className="flex flex-1 overflow-hidden">
+                {/* Panel kiri */}
+                <aside className="border-r bg-card p-4 overflow-y-auto">
+                    <WidgetPanel onAddWidget={addWidget} />
+                </aside>
+
+                {/* Area grid */}
+                <main className="flex-1 p-6 overflow-y-auto">
+                    <DashboardGrid
+                        layout={layout}
+                        widgets={widgets}
+                        setWidgets={setWidgets}
+                        onLayoutChange={handleLayoutChange}
+                    />
+                </main>
             </div>
         </div>
     );
