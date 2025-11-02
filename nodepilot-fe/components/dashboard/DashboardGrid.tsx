@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef } from "react";
-import GridLayout from "react-grid-layout";
-import Widget from "./Widget";
+// 1. Impor 'Layout' dari 'react-grid-layout'
+import GridLayout, { Layout } from "react-grid-layout";
+// 2. Impor 'WidgetType' dari file Widget.tsx
+import Widget, { WidgetType } from "./Widget";
 import { useAuthStore } from "@/store/authStore";
 
 export default function DashboardGrid({
@@ -11,16 +13,18 @@ export default function DashboardGrid({
     setWidgets,
     onLayoutChange,
 }: {
-    layout: any[];
-    widgets: any[];
-    setWidgets: (updater: any) => void;
-    onLayoutChange: (layout: any[]) => void;
+    // 3. Gunakan tipe yang spesifik, bukan 'any'
+    layout: Layout[];
+    widgets: WidgetType[];
+    setWidgets: (updater: (prev: WidgetType[]) => WidgetType[]) => void;
+    onLayoutChange: (layout: Layout[]) => void;
 }) {
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
     const { token } = useAuthStore();
 
     // ✅ Hapus widget
     const deleteWidget = (id: number) => {
+        // 4. Beri tipe 'prev' dan 'w' (atau biarkan TypeScript infer)
         setWidgets((prev) => prev.filter((w) => w.id !== id));
         fetch(`http://localhost:5000/api/widgets/${id}`, {
             method: "DELETE",
@@ -29,7 +33,8 @@ export default function DashboardGrid({
     };
 
     // ✅ Auto-save posisi widget ke DB dengan debounce
-    const handleDebouncedLayoutChange = (newLayout: any[]) => {
+    // 5. Beri tipe 'newLayout'
+    const handleDebouncedLayoutChange = (newLayout: Layout[]) => {
         onLayoutChange(newLayout);
 
         if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
@@ -37,8 +42,10 @@ export default function DashboardGrid({
         debounceTimeout.current = setTimeout(() => {
             console.log("💾 Saving layout to backend...");
 
-            newLayout.forEach((item) => {
-                const widget = widgets.find((w) => w.id.toString() === item.i);
+            // 6. Beri tipe 'item'
+            newLayout.forEach((item: Layout) => {
+                // 7. Beri tipe 'w'
+                const widget = widgets.find((w: WidgetType) => w.id.toString() === item.i);
                 if (widget) {
                     fetch(`http://localhost:5000/api/widgets/${widget.id}`, {
                         method: "PUT",
@@ -77,7 +84,8 @@ export default function DashboardGrid({
                 onLayoutChange={handleDebouncedLayoutChange}
             >
                 {Array.isArray(widgets) &&
-                    widgets.map((widget) => (
+                    // 8. Beri tipe 'widget'
+                    widgets.map((widget: WidgetType) => (
                         <div
                             key={widget.id}
                             data-grid={layout.find((l) => l.i === widget.id.toString())}

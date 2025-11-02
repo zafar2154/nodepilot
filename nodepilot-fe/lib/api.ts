@@ -1,10 +1,15 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-export async function apiRequest(endpoint: string, method = "GET", data?: any, token?: string) {
+export async function apiRequest(
+  endpoint: string,
+  method = 'GET',
+  data?: Record<string, unknown>,
+  token?: string,
+) {
   const res = await fetch(`${API_URL}${endpoint}`, {
     method,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: data ? JSON.stringify(data) : undefined,
