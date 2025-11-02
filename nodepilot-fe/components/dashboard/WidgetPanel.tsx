@@ -1,10 +1,9 @@
 "use client";
-
+import Link from "next/link";
 export default function WidgetPanel({ onAddWidget }: { onAddWidget: (type: string) => void }) {
     const widgetTypes = [
         { type: "switch", label: "Switch" },
         { type: "label", label: "Label" },
-        { type: "chart", label: "Chart" },
     ];
 
     return (
@@ -19,6 +18,13 @@ export default function WidgetPanel({ onAddWidget }: { onAddWidget: (type: strin
                     ➕ {w.label}
                 </button>
             ))}
+            <hr className="my-4 border-t" />
+            <Link
+                href="/devices"
+                className="bg-gray-700 text-white rounded p-2 hover:bg-gray-600 text-center"
+            >
+                ⚙️ Manage Devices
+            </Link>
         </div>
     );
 }

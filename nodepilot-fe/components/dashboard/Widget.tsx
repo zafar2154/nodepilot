@@ -13,10 +13,11 @@ export default function Widget({
     setWidgets: (updater: (prev: any[]) => any[]) => void;
 }) {
     const { token } = useAuthStore(); // ✅ ambil token dari global store
-
     const [ws, setWs] = useState<WebSocket | null>(null);
     const [devices, setDevices] = useState<any[]>([]);
     const [data, setData] = useState<any>(null);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [currentName, setCurrentName] = useState(widget.name || "");
 
     // Hubungkan ke WebSocket
     useEffect(() => {
@@ -29,8 +30,8 @@ export default function Widget({
 
             const msg = JSON.parse(event.data);
             console.log("🧠 Device compare:", msg.deviceId, widget.deviceId);
-            if (msg.type === "sensor_data" || msg.deviceId === widget.deviceId) {
-                setData(msg.value);
+            if (msg.type === "sensor_data" && msg.deviceId === widget.deviceId) {
+                setData(msg.value); // 'msg.value' sekarang adalah angka (misal: 28)
             }
         };
         setWs(socket);
@@ -74,25 +75,62 @@ export default function Widget({
             console.error("❌ Failed to update widget device:", err);
         }
     };
-    const updateDataKey = async (e: React.FocusEvent<HTMLInputElement>) => {
-        const newDataKey = e.target.value;
+    const handleNameSave = async () => {
+        setIsEditingName(false);
+        if (currentName === widget.name) return; // Tidak ada perubahan
+
+        // Update state di frontend
         setWidgets((prev) =>
             prev.map((w) =>
-                w.id === widget.id ? { ...w, dataKey: newDataKey } : w
+                w.id === widget.id ? { ...w, name: currentName } : w
             )
         );
+
+        // Kirim ke backend
         try {
-            await fetch(`http://localhost:5000/api/widgets/${widget.id}`, { // Gunakan route PUT /api/widgets/:id
+            await fetch(`http://localhost:5000/api/widgets/${widget.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify({ dataKey: newDataKey }), // Kirim dataKey baru
+                body: JSON.stringify({ name: currentName }),
             });
         } catch (err) {
-            console.error("❌ Failed to update widget dataKey:", err);
+            console.error("❌ Failed to update widget name:", err);
+            // Rollback jika gagal (opsional)
+            setWidgets((prev) =>
+                prev.map((w) =>
+                    w.id === widget.id ? { ...w, name: widget.name } : w
+                )
+            );
         }
+    };
+
+    // --- Komponen kecil untuk Judul yang bisa di-edit ---
+    const EditableWidgetName = () => {
+        if (isEditingName) {
+            return (
+                <input
+                    type="text"
+                    value={currentName}
+                    onChange={(e) => setCurrentName(e.target.value)}
+                    onBlur={handleNameSave} // Simpan saat fokus hilang
+                    onKeyDown={(e) => e.key === 'Enter' && handleNameSave()}
+                    className="text-lg font-semibold text-center border rounded w-full"
+                    autoFocus
+                />
+            );
+        }
+        return (
+            <h3
+                onClick={() => setIsEditingName(true)}
+                className="text-lg font-semibold text-center cursor-pointer hover:bg-gray-100 p-1"
+                title="Click to edit name"
+            >
+                {currentName || "Widget"}
+            </h3>
+        );
     };
 
     // Render per jenis widget
@@ -100,6 +138,7 @@ export default function Widget({
         case "switch":
             return (
                 <div className="p-4 border rounded-lg bg-card shadow-md flex flex-col items-center justify-center space-y-2">
+                    <EditableWidgetName /> {/* <-- Gunakan komponen baru */}
                     <SwitchWidget ws={ws} deviceId={widget.deviceId} />
                     <select
                         value={widget.deviceId || ""}
@@ -120,8 +159,8 @@ export default function Widget({
             return (
                 <div className="p-4 border rounded-lg bg-card shadow-md text-center space-y-2">
                     <h3 className="text-lg font-semibold">{widget.label || "Sensor Data"}</h3>
-
-                    {/* 🔽 Tambah dropdown pilih device */}
+                    <EditableWidgetName /> {/* <-- Gunakan komponen baru */}
+                    {/* 🔽 Dropdown pilih device (sudah benar) */}
                     <select
                         value={widget.deviceId || ""}
                         onChange={(e) => updateDevice(Number(e.target.value))}
@@ -134,37 +173,17 @@ export default function Widget({
                             </option>
                         ))}
                     </select>
-                    <input
-                        type="text"
-                        placeholder="Data Key (e.g., 'temp')"
-                        defaultValue={widget.dataKey || ""}
-                        onBlur={updateDataKey} // Simpan saat fokus hilang
-                        className="border rounded p-1 text-sm w-full text-center"
-                    />
 
-                    {/* 🔢 Info data */}
-                    {data ? (
+                    {/* 3. Ubah cara tampil data (jauh lebih simpel) */}
+                    {data !== null ? (
                         <div>
-                            {/* Tampilkan data secara dinamis berdasarkan dataKey */}
-                            <p className="text-3xl font-bold">
-                                {data[widget.dataKey] ?? "..."}
-                            </p>
+                            <p className="text-3xl font-bold">{data}</p>
                         </div>
                     ) : (
                         <p className="text-gray-400">Waiting for data...</p>
                     )}
                 </div>
-
             );
-
-        case "chart":
-            return (
-                <div className="p-4 border rounded-lg bg-card shadow-md text-center">
-                    <h3 className="text-lg font-semibold mb-2">Chart (coming soon)</h3>
-                    <p className="text-gray-500">Realtime data graph</p>
-                </div>
-            );
-
         default:
             return (
                 <div className="p-4 border rounded-lg bg-card shadow-md flex items-center justify-center">

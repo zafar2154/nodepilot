@@ -2,7 +2,9 @@ import app from './app.js';
 import 'dotenv/config';
 import { WebSocketServer } from 'ws';
 import http from 'http';
+import { PrismaClient } from '@prisma/client'; // <-- 1. Impor Prisma
 
+const prisma = new PrismaClient(); // <-- 2. Buat instance Prisma
 const PORT = process.env.PORT || 5000;
 
 // Buat HTTP server dari Express
@@ -20,7 +22,7 @@ const clients = {
 wss.on('connection', (ws) => {
   console.log('⚡ New WebSocket connection');
 
-  ws.on('message', (msg) => {
+  ws.on('message', async (msg) => {
     try {
       const data = JSON.parse(msg);
       console.log('📩 Received:', data);
@@ -41,7 +43,17 @@ wss.on('connection', (ws) => {
 
       // Data sensor dari ESP32
       else if (data.type === 'sensor_data') {
-        console.log(`🌡️ Data from Device ${data.deviceId}:`, data.value);
+        console.log(`Data from Device ${data.deviceId}:`, data.value);
+        try {
+          await prisma.deviceData.create({
+            data: {
+              value: data.value,
+              deviceId: data.deviceId,
+            },
+          });
+        } catch (dbError) {
+          console.error('❌ Failed to save sensor data to DB:', dbError);
+        }
         for (const [id, userWs] of clients.users) {
           if (userWs.readyState === 1) {
             userWs.send(JSON.stringify(data));

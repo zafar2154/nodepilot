@@ -113,7 +113,36 @@ export const getDeviceStatus = async (req, res) => {
   }
 };
 
-// ... (fungsi lainnya)
+// Update a device (misal: ganti nama)
+export const updateDevice = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body; // Hanya izinkan update nama
+
+    // Pastikan device ada dan milik user
+    const device = await prisma.device.findFirst({
+      where: {
+        id: Number(id),
+        userId: req.user.id,
+      },
+    });
+
+    if (!device) {
+      return res.status(404).json({ error: 'Device not found' });
+    }
+
+    // Update device
+    const updatedDevice = await prisma.device.update({
+      where: { id: Number(id) },
+      data: { name },
+    });
+
+    res.json(updatedDevice);
+  } catch (err) {
+    console.error('Error updating device:', err);
+    res.status(500).json({ error: 'Failed to update device' });
+  }
+};
 
 // Delete a device
 export const deleteDevice = async (req, res) => {

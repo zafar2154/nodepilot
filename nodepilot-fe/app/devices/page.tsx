@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/authStore";
 import Link from "next/link";
+import { useRouter } from "next/navigation"; // <-- Impor useRouter
 
 interface Device {
   id: number;
@@ -12,12 +13,14 @@ interface Device {
 
 export default function DeviceListPage() {
   const { token } = useAuthStore();
+  const router = useRouter();
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [newDevice, setNewDevice] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   const fetchDevices = () => {
-    // ... (fungsi ini sudah ada)
     if (!token) return;
     fetch("http://localhost:5000/api/devices", {
       headers: { Authorization: `Bearer ${token}` },
@@ -82,15 +85,68 @@ export default function DeviceListPage() {
     }
   };
 
+  // Panggil saat tombol "Edit" diklik
+  const startEditing = (device: Device) => {
+    setEditingId(device.id);
+    setEditingName(device.name);
+  };
+
+  // Panggil saat tombol "Cancel" diklik
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditingName("");
+  };
+
+  // Panggil saat tombol "Save" diklik
+  const handleUpdateDevice = async (id: number) => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/devices/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: editingName }),
+      });
+
+      if (res.ok) {
+        cancelEditing(); // Keluar dari mode edit
+        fetchDevices(); // Refresh data
+      } else {
+        alert("Failed to update device");
+      }
+    } catch (err) {
+      alert("An error occurred");
+    }
+  };
+
   if (loading) return <p className="text-center mt-10">Loading devices...</p>;
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">My Devices</h1>
+    <div className="p-6 max-w-2xl mx-auto">
+      <button
+        onClick={() => router.push('/dashboard')}
+        className="text-blue-600 hover:underline mb-4"
+      >
+        &larr; Back to Dashboard
+      </button>
+      <h1 className="text-2xl font-bold mb-4">Manage My Devices</h1>
 
-      {/* Form Add Device (sudah ada) */}
+      {/* Form Add Device */}
       <form onSubmit={handleAddDevice} className="flex gap-2 mb-6">
-        {/* ... (isi form) ... */}
+        <input
+          type="text"
+          value={newDevice}
+          onChange={(e) => setNewDevice(e.target.value)}
+          placeholder="New device name (e.g., Suhu Kebun)"
+          className="border p-2 rounded w-full"
+        />
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Add
+        </button>
       </form>
 
       {/* List Devices */}
@@ -98,27 +154,62 @@ export default function DeviceListPage() {
         {devices.map((device) => (
           <li
             key={device.id}
-            className="border p-3 rounded-lg shadow-sm hover:shadow-md flex justify-between items-center"
+            className="border p-3 rounded-lg shadow-sm"
           >
-            <div>
-              <Link
-                href={`/devices/${device.id}`}
-                className="text-blue-600 hover:underline"
-              >
-                {device.name}
-              </Link>
-              <p className="text-sm text-gray-500">
-                Created at: {new Date(device.createdAt).toLocaleString()}
-              </p>
-            </div>
-
-            {/* 2. Tambahkan tombol delete di sini */}
-            <button
-              onClick={() => handleDeleteDevice(device.id)}
-              className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
-            >
-              Delete
-            </button>
+            {/* Tampilkan input jika ID-nya sedang diedit */}
+            {editingId === device.id ? (
+              <div className="flex flex-col space-y-2">
+                <input
+                  type="text"
+                  value={editingName}
+                  onChange={(e) => setEditingName(e.target.value)}
+                  className="border p-2 rounded w-full"
+                />
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleUpdateDevice(device.id)}
+                    className="bg-green-500 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    className="bg-gray-500 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Tampilkan mode normal
+              <div className="flex justify-between items-center">
+                <div>
+                  <Link
+                    href={`/devices/${device.id}`}
+                    className="text-blue-600 hover:underline font-semibold"
+                  >
+                    {device.name}
+                  </Link>
+                  <p className="text-sm text-gray-500">
+                    ID: {device.id} | Created: {new Date(device.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => startEditing(device)}
+                    className="bg-yellow-500 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteDevice(device.id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            )}
           </li>
         ))}
       </ul>
