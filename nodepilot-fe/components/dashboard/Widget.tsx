@@ -74,6 +74,26 @@ export default function Widget({
             console.error("❌ Failed to update widget device:", err);
         }
     };
+    const updateDataKey = async (e: React.FocusEvent<HTMLInputElement>) => {
+        const newDataKey = e.target.value;
+        setWidgets((prev) =>
+            prev.map((w) =>
+                w.id === widget.id ? { ...w, dataKey: newDataKey } : w
+            )
+        );
+        try {
+            await fetch(`http://localhost:5000/api/widgets/${widget.id}`, { // Gunakan route PUT /api/widgets/:id
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ dataKey: newDataKey }), // Kirim dataKey baru
+            });
+        } catch (err) {
+            console.error("❌ Failed to update widget dataKey:", err);
+        }
+    };
 
     // Render per jenis widget
     switch (widget.type) {
@@ -114,12 +134,21 @@ export default function Widget({
                             </option>
                         ))}
                     </select>
+                    <input
+                        type="text"
+                        placeholder="Data Key (e.g., 'temp')"
+                        defaultValue={widget.dataKey || ""}
+                        onBlur={updateDataKey} // Simpan saat fokus hilang
+                        className="border rounded p-1 text-sm w-full text-center"
+                    />
 
                     {/* 🔢 Info data */}
                     {data ? (
                         <div>
-                            <p className="text-xl">🌡️ {data.temp ?? "-"}°C</p>
-                            <p className="text-xl">💧 pH: {data.ph ?? "-"}</p>
+                            {/* Tampilkan data secara dinamis berdasarkan dataKey */}
+                            <p className="text-3xl font-bold">
+                                {data[widget.dataKey] ?? "..."}
+                            </p>
                         </div>
                     ) : (
                         <p className="text-gray-400">Waiting for data...</p>

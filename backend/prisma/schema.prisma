@@ -41,6 +41,7 @@ model Widget {
   name      String
   type      String // "button", "label", "chart"
   value     String?  @default("")
+  dataKey   String?  @default("") // <-- TAMBAHKAN INI
   x         Int      @default(0)
   y         Int      @default(0)
   width     Int      @default(2)
