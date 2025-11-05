@@ -77,6 +77,7 @@ export default function Widget({
     widget: WidgetType;
     setWidgets: (updater: (prev: WidgetType[]) => WidgetType[]) => void;
 }) {
+    const ip = process.env.NEXT_PUBLIC_API;
     // Ambil 'user' untuk ID WebSocket
     const { token, user } = useAuthStore();
     const [ws, setWs] = useState<WebSocket | null>(null);
@@ -89,7 +90,7 @@ export default function Widget({
 
     // Hubungkan ke WebSocket
     useEffect(() => {
-        const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:5000";
+        const WS_URL = process.env.NEXT_PUBLIC_API || `ws://${ip}}`;
         const socket = new WebSocket(WS_URL);
 
         socket.onopen = () => {
@@ -118,7 +119,7 @@ export default function Widget({
     useEffect(() => {
         if (!token) return;
 
-        fetch("http://localhost:5000/api/devices", {
+        fetch(`http://${ip}/api/devices`, {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then((res) => res.json())
@@ -147,7 +148,7 @@ export default function Widget({
             )
         );
         try {
-            await fetch(`http://localhost:5000/api/widgets/${widget.id}/device`, {
+            await fetch(`http://${ip}/api/widgets/${widget.id}/device`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -173,7 +174,7 @@ export default function Widget({
         );
 
         try {
-            await fetch(`http://localhost:5000/api/widgets/${widget.id}`, {
+            await fetch(`http://${ip}/api/widgets/${widget.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

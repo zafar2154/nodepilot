@@ -11,6 +11,7 @@ import { WidgetType } from "@/components/dashboard/Widget";
 import { Layout } from "react-grid-layout";
 
 export default function DashboardPage() {
+    const ip = process.env.NEXT_PUBLIC_API;
     const { token, clearAuth } = useAuthStore();
     // 2. Gunakan tipe data spesifik, bukan any[]
     const [widgets, setWidgets] = useState<WidgetType[]>([]);
@@ -21,7 +22,7 @@ export default function DashboardPage() {
     useEffect(() => {
         if (token) {
             console.log("TOKEN:", token)
-            fetch("http://localhost:5000/api/widgets", {
+            fetch(`http://${ip}/api/widgets`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
@@ -60,7 +61,7 @@ export default function DashboardPage() {
         };
 
         try {
-            const res = await fetch("http://localhost:5000/api/widgets", {
+            const res = await fetch(`http://${ip}/api/widgets`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

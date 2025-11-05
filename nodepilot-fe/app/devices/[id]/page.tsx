@@ -20,6 +20,7 @@ interface DeviceData {
 }
 
 export default function DeviceDetailPage() {
+  const ip = process.env.NEXT_PUBLIC_API;
   const { id } = useParams();
   const { token } = useAuthStore();
   const [data, setData] = useState<DeviceData[]>([]);
@@ -27,7 +28,7 @@ export default function DeviceDetailPage() {
 
   useEffect(() => {
     if (!token) return;
-    fetch(`http://localhost:5000/api/devices/${id}/data`, {
+    fetch(`http://${ip}/api/devices/${id}/data`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

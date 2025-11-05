@@ -19,6 +19,7 @@ export default function DashboardGrid({
     setWidgets: (updater: (prev: WidgetType[]) => WidgetType[]) => void;
     onLayoutChange: (layout: Layout[]) => void;
 }) {
+    const ip = process.env.NEXT_PUBLIC_API;
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
     const { token } = useAuthStore();
 
@@ -26,7 +27,7 @@ export default function DashboardGrid({
     const deleteWidget = (id: number) => {
         // 4. Beri tipe 'prev' dan 'w' (atau biarkan TypeScript infer)
         setWidgets((prev) => prev.filter((w) => w.id !== id));
-        fetch(`http://localhost:5000/api/widgets/${id}`, {
+        fetch(`http://${ip}/api/widgets/${id}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
         }).catch((err) => console.error("❌ Failed to delete widget:", err));
@@ -47,7 +48,7 @@ export default function DashboardGrid({
                 // 7. Beri tipe 'w'
                 const widget = widgets.find((w: WidgetType) => w.id.toString() === item.i);
                 if (widget) {
-                    fetch(`http://localhost:5000/api/widgets/${widget.id}`, {
+                    fetch(`http://${ip}/api/widgets/${widget.id}`, {
                         method: "PUT",
                         headers: {
                             "Content-Type": "application/json",

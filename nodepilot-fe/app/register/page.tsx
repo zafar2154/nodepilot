@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 
 export default function RegisterPage() {
+  const ip = process.env.NEXT_PUBLIC_API;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function RegisterPage() {
     e.preventDefault();
     console.log("🛰️ Sending register data:", { email, password });
 
-    const res = await fetch("http://localhost:5000/api/auth/register", {
+    const res = await fetch(`http://${ip}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
