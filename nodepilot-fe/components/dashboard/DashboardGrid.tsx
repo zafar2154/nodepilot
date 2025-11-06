@@ -25,7 +25,7 @@ export default function DashboardGrid({
     // ✅ Hapus widget
     const deleteWidget = (id: number) => {
         setWidgets((prev) => prev.filter((w) => w.id !== id));
-        fetch(`http://${ip}/api/widgets/${id}`, {
+        fetch(`https://${ip}/api/widgets/${id}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
         }).catch((err) => console.error("❌ Failed to delete widget:", err));
@@ -43,7 +43,7 @@ export default function DashboardGrid({
             newLayout.forEach((item) => {
                 const widget = widgets.find((w) => w.id.toString() === item.i);
                 if (widget) {
-                    fetch(`http://${ip}/api/widgets/${widget.id}`, {
+                    fetch(`https://${ip}/api/widgets/${widget.id}`, {
                         method: "PUT",
                         headers: {
                             "Content-Type": "application/json",

@@ -28,7 +28,7 @@ export default function DeviceDetailPage() {
   useEffect(() => {
     const ip = process.env.NEXT_PUBLIC_API;
     if (!token) return;
-    fetch(`http://${ip}/api/devices/${id}/data`, {
+    fetch(`https://${ip}/api/devices/${id}/data`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

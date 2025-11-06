@@ -24,7 +24,7 @@ export default function Widget({
     useEffect(() => {
         const ip = process.env.NEXT_PUBLIC_API;
 
-        const socket = new WebSocket(`ws://${ip}`);
+        const socket = new WebSocket(`wss://${ip}`);
         socket.onopen = () => {
             socket.send(JSON.stringify({ type: "register_user", userId: 1 }));
         };
@@ -45,7 +45,7 @@ export default function Widget({
     useEffect(() => {
         if (!token) return; // pastikan token ada
 
-        fetch(`http://${ip}/api/devices`, {
+        fetch(`https://${ip}/api/devices`, {
             headers: { Authorization: `Bearer ${token}` }, // ✅ sama seperti /devices
         })
             .then((res) => res.json())
@@ -66,7 +66,7 @@ export default function Widget({
         );
         // Update ke backend supaya tersimpan di database
         try {
-            await fetch(`http://${ip}/api/widgets/${widget.id}/device`, {
+            await fetch(`https://${ip}/api/widgets/${widget.id}/device`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -92,7 +92,7 @@ export default function Widget({
 
         // Kirim ke backend
         try {
-            await fetch(`http://${ip}/api/widgets/${widget.id}`, {
+            await fetch(`https://${ip}/api/widgets/${widget.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",

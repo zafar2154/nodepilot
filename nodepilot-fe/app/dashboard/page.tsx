@@ -20,7 +20,7 @@ export default function DashboardPage() {
         if (token) {
             const ip = process.env.NEXT_PUBLIC_API;
             console.log("TOKEN:", token)
-            fetch(`http://${ip}/api/widgets`, {
+            fetch(`https://${ip}/api/widgets`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
@@ -56,7 +56,7 @@ export default function DashboardPage() {
 
         try {
             const ip = process.env.NEXT_PUBLIC_API;
-            const res = await fetch(`http://${ip}/api/widgets`, {
+            const res = await fetch(`https://${ip}/api/widgets`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
