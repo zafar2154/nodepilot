@@ -8,7 +8,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: 'http://localhost:3000', // asal frontend
+    origin: ['http://localhost:3000', 'https://nodepilot-one.vercel.app'], // asal frontend
     credentials: true,
   }),
 );
