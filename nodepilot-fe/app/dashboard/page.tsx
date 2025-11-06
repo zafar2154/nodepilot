@@ -6,24 +6,21 @@ import WidgetPanel from "@/components/dashboard/WidgetPanel";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuthStore } from "@/store/authStore";
 import ProtectedRoute from "@/components/ProtectedRoute"; // <-- 1. Impor ProtectedRoute
+import { Widget as widgetTypes } from "@/lib/types";
+import { Layout } from "react-grid-layout";
 
 export default function DashboardPage() {
     const { token, clearAuth } = useAuthStore(); // Pastikan sudah diganti ke clearAuth
-    const [widgets, setWidgets] = useState<any[]>([]);
-    const [layout, setLayout] = useState<any[]>([]);
+    const [widgets, setWidgets] = useState<widgetTypes[]>([]);
+    const [layout, setLayout] = useState<Layout[]>([]);
     const router = useRouter();
 
     // ✅ Ambil semua widget user
     useEffect(() => {
-        // 3. HAPUS 'if (!token)' yang lama dari sini
-        //    if (!token) {
-        //        router.push("/login");
-        //    }
-
-        // 4. TAMBAHKAN pengecekan if(token) SEBELUM fetch
         if (token) {
+            const ip = process.env.NEXT_PUBLIC_API;
             console.log("TOKEN:", token)
-            fetch("http://localhost:5000/api/widgets", {
+            fetch(`http://${ip}/api/widgets`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
@@ -31,7 +28,7 @@ export default function DashboardPage() {
                     if (!Array.isArray(data)) return;
                     setWidgets(data);
                     setLayout(
-                        data.map((w: any) => ({
+                        data.map((w: widgetTypes) => ({
                             i: w.id.toString(),
                             x: w.x || 0,
                             y: w.y || 0,
@@ -58,7 +55,8 @@ export default function DashboardPage() {
         };
 
         try {
-            const res = await fetch("http://localhost:5000/api/widgets", {
+            const ip = process.env.NEXT_PUBLIC_API;
+            const res = await fetch(`http://${ip}/api/widgets`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -87,7 +85,7 @@ export default function DashboardPage() {
     };
 
     // ✅ Update layout (dipanggil dari DashboardGrid)
-    const handleLayoutChange = (newLayout: any[]) => {
+    const handleLayoutChange = (newLayout: Layout[]) => {
         setLayout(newLayout);
     };
 

@@ -26,8 +26,9 @@ export default function DeviceDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const ip = process.env.NEXT_PUBLIC_API;
     if (!token) return;
-    fetch(`http://localhost:5000/api/devices/${id}/data`, {
+    fetch(`http://${ip}/api/devices/${id}/data`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

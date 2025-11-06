@@ -24,9 +24,10 @@ export default function DeviceListPage() {
   const [editingName, setEditingName] = useState("");
   const [editingVPin, setEditingVPin] = useState("");
 
+  const ip = process.env.NEXT_PUBLIC_API;
   const fetchDevices = () => {
     if (!token) return;
-    fetch("http://localhost:5000/api/devices", {
+    fetch(`http://${ip}/api/devices`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -49,7 +50,7 @@ export default function DeviceListPage() {
       return;
     }
 
-    await fetch("http://localhost:5000/api/devices", {
+    await fetch(`http://${ip}/api/devices`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -74,7 +75,7 @@ export default function DeviceListPage() {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/devices/${id}`, {
+      const res = await fetch(`http://${ip}/api/devices/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -109,7 +110,7 @@ export default function DeviceListPage() {
   // Panggil saat tombol "Save" diklik
   const handleUpdateDevice = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/devices/${id}`, {
+      const res = await fetch(`http://${ip}/api/devices/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

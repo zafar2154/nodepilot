@@ -9,12 +9,13 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const router = useRouter();
   const { setAuth } = useAuthStore();
+  const ip = process.env.NEXT_PUBLIC_API;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("🛰️ Sending register data:", { email, password });
 
-    const res = await fetch("http://localhost:5000/api/auth/register", {
+    const res = await fetch(`http://${ip}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -3,25 +3,28 @@
 import React, { useEffect, useState } from "react";
 import SwitchWidget from "./widget/SwitchWidget";
 import { useAuthStore } from "@/store/authStore";
-
+import { Device, Widget as widgetTypes } from "@/lib/types";
 
 export default function Widget({
     widget,
     setWidgets,
 }: {
-    widget: any;
-    setWidgets: (updater: (prev: any[]) => any[]) => void;
+    widget: widgetTypes;
+    setWidgets: (updater: (prev: widgetTypes[]) => widgetTypes[]) => void;
 }) {
     const { token } = useAuthStore(); // ✅ ambil token dari global store
     const [ws, setWs] = useState<WebSocket | null>(null);
-    const [devices, setDevices] = useState<any[]>([]);
-    const [data, setData] = useState<any>(null);
+    const [devices, setDevices] = useState<Device[]>([]);
+    const [data, setData] = useState<number | null>(null);
     const [isEditingName, setIsEditingName] = useState(false);
     const [currentName, setCurrentName] = useState(widget.name || "");
+    const ip = process.env.NEXT_PUBLIC_API;
 
     // Hubungkan ke WebSocket
     useEffect(() => {
-        const socket = new WebSocket("ws://localhost:5000");
+        const ip = process.env.NEXT_PUBLIC_API;
+
+        const socket = new WebSocket(`ws://${ip}`);
         socket.onopen = () => {
             socket.send(JSON.stringify({ type: "register_user", userId: 1 }));
         };
@@ -29,7 +32,6 @@ export default function Widget({
             console.log("📡 WebSocket message:", event.data);
 
             const msg = JSON.parse(event.data);
-            console.log("🧠 Device compare:", msg.deviceId, widget.deviceId);
             if (msg.type === "sensor_data" && msg.deviceId === widget.deviceId) {
                 setData(msg.value); // 'msg.value' sekarang adalah angka (misal: 28)
             }
@@ -43,7 +45,7 @@ export default function Widget({
     useEffect(() => {
         if (!token) return; // pastikan token ada
 
-        fetch("http://localhost:5000/api/devices", {
+        fetch(`http://${ip}/api/devices`, {
             headers: { Authorization: `Bearer ${token}` }, // ✅ sama seperti /devices
         })
             .then((res) => res.json())
@@ -54,15 +56,17 @@ export default function Widget({
             .catch((err) => console.error("❌ Error fetching devices:", err));
     }, [token]);
 
-    const updateDevice = async (deviceId: number) => {
-        setWidgets((prev) =>
+    const updateDevice = async (deviceId: string) => {
+        const newDeviceId = deviceId ? Number(deviceId) : null;
+
+        setWidgets((prev: widgetTypes[]) => // Pastikan Anda memberi tipe pada 'prev'
             prev.map((w) =>
-                w.id === widget.id ? { ...w, deviceId: Number(deviceId) } : w
+                w.id === widget.id ? { ...w, deviceId: newDeviceId } : w
             )
         );
         // Update ke backend supaya tersimpan di database
         try {
-            await fetch(`http://localhost:5000/api/widgets/${widget.id}/device`, {
+            await fetch(`http://${ip}/api/widgets/${widget.id}/device`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -88,7 +92,7 @@ export default function Widget({
 
         // Kirim ke backend
         try {
-            await fetch(`http://localhost:5000/api/widgets/${widget.id}`, {
+            await fetch(`http://${ip}/api/widgets/${widget.id}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -162,7 +166,7 @@ export default function Widget({
                     {/* 🔽 Dropdown pilih device (sudah benar) */}
                     <select
                         value={widget.deviceId || ""}
-                        onChange={(e) => updateDevice(Number(e.target.value))}
+                        onChange={(e) => updateDevice(e.target.value)}
                         className="border rounded p-1 text-sm"
                     >
                         <option value="">Select Device</option>

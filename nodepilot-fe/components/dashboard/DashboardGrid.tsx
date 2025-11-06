@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef } from "react";
-import GridLayout from "react-grid-layout";
+import GridLayout, { Layout } from "react-grid-layout";
 import Widget from "./Widget";
 import { useAuthStore } from "@/store/authStore";
+import { Widget as widgetTypes } from "@/lib/types";
 
 export default function DashboardGrid({
     layout,
@@ -11,25 +12,27 @@ export default function DashboardGrid({
     setWidgets,
     onLayoutChange,
 }: {
-    layout: any[];
-    widgets: any[];
-    setWidgets: (updater: any) => void;
-    onLayoutChange: (layout: any[]) => void;
+    layout: Layout[];
+    widgets: widgetTypes[];
+    setWidgets: (updater: (prev: widgetTypes[]) => widgetTypes[]) => void;
+    onLayoutChange: (layout: Layout[]) => void;
 }) {
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
     const { token } = useAuthStore();
+    const ip = process.env.NEXT_PUBLIC_API
+
 
     // ✅ Hapus widget
     const deleteWidget = (id: number) => {
         setWidgets((prev) => prev.filter((w) => w.id !== id));
-        fetch(`http://localhost:5000/api/widgets/${id}`, {
+        fetch(`http://${ip}/api/widgets/${id}`, {
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
         }).catch((err) => console.error("❌ Failed to delete widget:", err));
     };
 
     // ✅ Auto-save posisi widget ke DB dengan debounce
-    const handleDebouncedLayoutChange = (newLayout: any[]) => {
+    const handleDebouncedLayoutChange = (newLayout: Layout[]) => {
         onLayoutChange(newLayout);
 
         if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
@@ -40,7 +43,7 @@ export default function DashboardGrid({
             newLayout.forEach((item) => {
                 const widget = widgets.find((w) => w.id.toString() === item.i);
                 if (widget) {
-                    fetch(`http://localhost:5000/api/widgets/${widget.id}`, {
+                    fetch(`http://${ip}/api/widgets/${widget.id}`, {
                         method: "PUT",
                         headers: {
                             "Content-Type": "application/json",

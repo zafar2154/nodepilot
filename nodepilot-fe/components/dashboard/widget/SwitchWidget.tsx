@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 
 interface SwitchWidgetProps {
     ws: WebSocket | null;
-    deviceId: number;
+    deviceId: number | null;
 }
 
 export default function SwitchWidget({ ws, deviceId }: SwitchWidgetProps) {
