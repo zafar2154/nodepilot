@@ -5,12 +5,11 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 
 export default function LoginPage() {
-  const ip = process.env.NEXT_PUBLIC_API;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
   const { setAuth } = useAuthStore(); // ✅ ambil dari store
-
+  const ip = process.env.NEXT_PUBLIC_API;
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 

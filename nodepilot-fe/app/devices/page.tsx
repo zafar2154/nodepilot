@@ -13,7 +13,6 @@ interface Device {
 }
 
 export default function DeviceListPage() {
-  const ip = process.env.NEXT_PUBLIC_API;
   const { token } = useAuthStore();
   const router = useRouter();
   const [devices, setDevices] = useState<Device[]>([]);
@@ -25,6 +24,7 @@ export default function DeviceListPage() {
   const [editingName, setEditingName] = useState("");
   const [editingVPin, setEditingVPin] = useState("");
 
+  const ip = process.env.NEXT_PUBLIC_API;
   const fetchDevices = () => {
     if (!token) return;
     fetch(`http://${ip}/api/devices`, {

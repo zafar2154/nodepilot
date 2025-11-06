@@ -5,37 +5,30 @@ import { useEffect, useState } from "react";
 import WidgetPanel from "@/components/dashboard/WidgetPanel";
 import DashboardGrid from "@/components/dashboard/DashboardGrid";
 import { useAuthStore } from "@/store/authStore";
-import ProtectedRoute from "@/components/ProtectedRoute";
-// 1. Impor tipe data yang dibutuhkan
-import { WidgetType } from "@/components/dashboard/Widget";
+import ProtectedRoute from "@/components/ProtectedRoute"; // <-- 1. Impor ProtectedRoute
+import { Widget as widgetTypes } from "@/lib/types";
 import { Layout } from "react-grid-layout";
 
 export default function DashboardPage() {
-    const ip = process.env.NEXT_PUBLIC_API;
-    const { token, clearAuth } = useAuthStore();
-    // 2. Gunakan tipe data spesifik, bukan any[]
-    const [widgets, setWidgets] = useState<WidgetType[]>([]);
+    const { token, clearAuth } = useAuthStore(); // Pastikan sudah diganti ke clearAuth
+    const [widgets, setWidgets] = useState<widgetTypes[]>([]);
     const [layout, setLayout] = useState<Layout[]>([]);
     const router = useRouter();
 
     // ✅ Ambil semua widget user
     useEffect(() => {
         if (token) {
+            const ip = process.env.NEXT_PUBLIC_API;
             console.log("TOKEN:", token)
             fetch(`http://${ip}/api/widgets`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
                 .then((res) => res.json())
-                // 3. Beri tipe pada 'data'
-                .then((data: WidgetType[] | { error: string }) => {
-                    if (!Array.isArray(data)) {
-                        console.error("Failed to fetch widgets:", data);
-                        return;
-                    }
+                .then((data) => {
+                    if (!Array.isArray(data)) return;
                     setWidgets(data);
                     setLayout(
-                        // 4. Beri tipe pada 'w'
-                        data.map((w: WidgetType) => ({
+                        data.map((w: widgetTypes) => ({
                             i: w.id.toString(),
                             x: w.x || 0,
                             y: w.y || 0,
@@ -46,10 +39,11 @@ export default function DashboardPage() {
                 })
                 .catch((err) => console.error("❌ Failed to fetch widgets:", err));
         }
-    }, [token]);
+    }, [token]); // Tetap gunakan token sebagai dependency
 
     // ✅ Tambah widget baru
     const addWidget = async (type: string) => {
+        // ... (kode ini sudah benar)
         const newWidget = {
             name: `${type} widget`,
             type,
@@ -61,6 +55,7 @@ export default function DashboardPage() {
         };
 
         try {
+            const ip = process.env.NEXT_PUBLIC_API;
             const res = await fetch(`http://${ip}/api/widgets`, {
                 method: "POST",
                 headers: {
@@ -70,13 +65,11 @@ export default function DashboardPage() {
                 body: JSON.stringify(newWidget),
             });
 
-            // 5. Beri tipe pada 'saved'
-            const saved: WidgetType = await res.json();
+            const saved = await res.json();
             if (!saved?.id) return;
 
-            // 6. Beri tipe pada 'prev'
-            setWidgets((prev: WidgetType[]) => [...prev, saved]);
-            setLayout((prev: Layout[]) => [
+            setWidgets((prev) => [...prev, saved]);
+            setLayout((prev) => [
                 ...prev,
                 {
                     i: saved.id.toString(),
@@ -92,12 +85,12 @@ export default function DashboardPage() {
     };
 
     // ✅ Update layout (dipanggil dari DashboardGrid)
-    // 7. Beri tipe pada 'newLayout'
     const handleLayoutChange = (newLayout: Layout[]) => {
         setLayout(newLayout);
     };
 
     return (
+        // 2. Bungkus semua JSX dengan <ProtectedRoute>
         <ProtectedRoute>
             <div className="flex flex-col min-h-screen bg-background text-foreground">
                 {/* 🔹 Header */}
@@ -105,7 +98,7 @@ export default function DashboardPage() {
                     <h1 className="text-2xl font-semibold tracking-tight">📊 Dashboard</h1>
                     <button
                         onClick={() => {
-                            clearAuth();
+                            clearAuth(); // Gunakan clearAuth
                             router.push("/");
                         }}
                         className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
@@ -135,4 +128,3 @@ export default function DashboardPage() {
         </ProtectedRoute>
     );
 }
-
