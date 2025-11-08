@@ -24,21 +24,29 @@ export default function Widget({
     useEffect(() => {
         const ip = process.env.NEXT_PUBLIC_API;
 
-        const socket = new WebSocket(`wss://${ip}`);
+        // I'm assuming you're using the /nodepilot path we discussed
+        const socket = new WebSocket(`wss://${ip}/nodepilot`);
+
         socket.onopen = () => {
             socket.send(JSON.stringify({ type: "register_user", userId: 1 }));
+            setWs(socket); // <-- Set state *after* the connection is open
         };
+
         socket.onmessage = (event) => {
             console.log("📡 WebSocket message:", event.data);
 
             const msg = JSON.parse(event.data);
             if (msg.type === "sensor_data" && msg.deviceId === widget.deviceId) {
-                setData(msg.value); // 'msg.value' sekarang adalah angka (misal: 28)
+                setData(msg.value);
             }
         };
-        setWs(socket);
 
-        return () => socket.close();
+        // setWs(socket); // <-- Remove from here
+
+        return () => {
+            socket.close();
+            setWs(null); // <-- Add cleanup for the state
+        };
     }, [widget.deviceId]);
 
     // Ambil daftar device user
